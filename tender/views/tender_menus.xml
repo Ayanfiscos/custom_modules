@@ -1,0 +1,11 @@
+<odoo>
+    <data>
+        <menuitem id="menu_tender_root" name="Tender" />
+        <menuitem id="menu_tender" name="Tenders"
+                  parent="menu_tender_root"
+                  action="tender.action_tender" />
+        <menuitem id="menu_contract" name="Contracts"
+                  parent="menu_tender_root"
+                  action="tender.action_contract"/>
+    </data>
+</odoo>

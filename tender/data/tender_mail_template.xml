@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="tender_save_notification_template" model="mail.template">
+            <field name="name">Tender Save Notification</field>
+            <field name="model_id" ref="model_tender_tender"/>
+            <field name="subject">Tender Saved: ${object.name}</field>
+            <field name="email_from">${user.email|safe}</field>
+            <field name="email_to">${object.manager_id.email|safe}</field>
+            <field name="body_html" type="html">
+                <div style="margin: 0px; padding: 0px;">
+                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                        Dear ${object.manager_id.name},
+                        <br/><br/>
+                        This is to notify you that the tender "${object.name}" has been saved.
+                        <br/><br/>
+                        Best regards,<br/>
+                        ${user.signature}
+                    </p>
+                </div>
+            </field>
+            <field name="lang">${object.partner_id.lang}</field>
+            <field name="auto_delete" eval="False"/>
+        </record>
+    </data>
+</odoo>

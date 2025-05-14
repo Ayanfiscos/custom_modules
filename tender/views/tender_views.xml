@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_tender_form" model="ir.ui.view">
+            <field name="name">tender.form</field>
+            <field name="model">tender.tender</field>
+            <field name="arch" type="xml">
+                <form string="Tender">
+                    <sheet>
+                        <header>
+                            <button name="action_save_record" type="object" string="Save"
+                                    invisible="state != 'draft'" class="btn-primary"/>
+                            <button name="action_send_email" type="object" string="Send for Approval"
+                                    invisible="state != 'draft'" class="btn-primary"/>
+                            <button name="action_approve" type="object" string="Approve" 
+                                    invisible="state != 'to_approve'" class="btn-success" />
+                            <button name="action_reject" type="object" string="Reject" 
+                                    invisible="state != 'to_approve'" class="btn-primary" />
+                            <button name="action_submit_to_client" type="object" string="Submit to Client" 
+                                    invisible="state != 'approved'" class="btn-success"/>
+                            <button name="action_request_inspection" type="object" string="Request Inspection" 
+                                    invisible="state != 'submitted'" class="btn-success"/>
+                            <button name="action_mark_pending_info" type="object" string="Awaiting Result" 
+                                    invisible="state not in ( 'inspection')" class="btn-success" />
+                            <button name="action_mark_won" type="object" string="Mark as Won" 
+                                    invisible="state not in ('pending_information')" class="btn-success" />
+                            <button name="action_mark_lost" type="object" string="Mark as Lost"
+                                    invisible="state not in ( 'pending_information')" class="btn-secondary" />
+                            <field name="state" widget="statusbar" 
+                                statusbar_visible="to_approve,approved,rejected,submitted,inspection,pending_information,won,lost"/>
+                        </header>
+                        <group>
+                            <field name="name" />
+                            <field name="tender_reference" />
+                            <field name="company_name" />
+                            <field name="date_receipt" />
+                            <field name="date_submission" />
+                            <field name="tender_type" widget="selection" />  
+                            <field name="tender_category" widget="selection" />
+                            <field name="partner_id" />
+                            <field name="manager_id" />
+                            <field name="state" readonly="1" />
+                            <field name="phone" />
+                            <field name="tender_outcome" readonly="1" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        <record id="view_tender_tree" model="ir.ui.view">
+            <field name="name">tender.tree</field>
+            <field name="model">tender.tender</field>
+            <field name="arch" type="xml">
+                <tree string="Tender" decoration-success="state == 'won'" decoration-danger="state == 'lost'">
+                    <field name="name" />
+                    <field name="tender_reference" />
+                    <field name="company_name" />
+                    <field name="date_submission" />
+                    <field name="tender_type" />
+                    <field name="state" />
+                    <field name="tender_outcome" widget="badge" 
+                        decoration-warning="tender_outcome == 'pending'"
+                        decoration-success="tender_outcome == 'won'"
+                        decoration-danger="tender_outcome == 'lost'"/>
+                </tree>
+            </field>
+        </record>
+        <record id="action_tender" model="ir.actions.act_window">
+            <field name="name">Tender</field>
+            <field name="res_model">tender.tender</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+                <p class="o_view_nocontent_smiling_face">Create Tender</p>
+            </field>
+        </record>
+    </data>
+</odoo>

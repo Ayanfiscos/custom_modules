@@ -1,0 +1,51 @@
+<odoo>
+    <data>
+        <record id="view_contract_form" model="ir.ui.view">
+            <field name="name">contract.form</field>
+            <field name="model">tender.contract</field>
+            <field name="arch" type="xml">
+                <form string="Contract">
+                    <sheet>
+                        <group>
+                            <field name="company_name"/>
+                            <field name="name"/>
+                            <field name="tender_id"/>
+                            <field name="contract_reference"/>
+                            <field name="start_date"/>
+                            <field name="end_date"/>
+                            <field name="approved_amount"/>
+                            <field name="state"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="view_contract_tree" model="ir.ui.view">
+            <field name="name">contract.tree</field>
+            <field name="model">tender.contract</field>
+            <field name="arch" type="xml">
+                <tree string="Contracts" decoration-success="tender_outcome == 'won'">
+                    <field name="company_name"/>
+                    <field name="name"/>
+                    <field name="tender_id"/>
+                    <field name="contract_reference"/>
+                    <field name="start_date"/>
+                    <field name="end_date"/>
+                    <field name="approved_amount"/>
+                    <field name="state"/>
+                    <field name="tender_outcome" widget="badge" 
+                        decoration-warning="tender_outcome == 'pending'"
+                        decoration-success="tender_outcome == 'won'"
+                        decoration-danger="tender_outcome == 'lost'"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="action_contract" model="ir.actions.act_window">
+            <field name="name">Contracts</field>
+            <field name="res_model">tender.contract</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,54 @@
+<odoo>
+    <!-- Form View -->
+    <record id="estate_property_type_form" model="ir.ui.view">
+        <field name="name">estate.property.type.form</field>
+        <field name="model">estate.property.type</field>
+        <field name="arch" type="xml">
+            <form string="Property Type">
+                <header>
+                    <button name="%(estate.action_estate_property_offers_list)s" type="action" 
+                        context="{'search_default_property_type_id': active_id}" 
+                        domain="[('property_type_id', '=', active_id)]" 
+                        icon="fa-envelope" 
+                        string="Offers" 
+                        invisible="offer_count == 0"/>
+                </header>
+
+
+                <sheet>
+                    <group>
+                        <div class="oe_button_box" name="button_box">
+                            <field name="offer_count" invisible="1"/>
+                        </div>
+                        <field name="name"/>
+                    </group>
+                    <field name="property_ids">
+                        <tree editable="bottom">
+                            <field name="name"/>
+                            <field name="expected_price"/>
+                            <field name="state"/>
+                        </tree>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- List View -->
+    <record id="estate_property_type_tree" model="ir.ui.view">
+        <field name="name">estate.property.type.tree</field>
+        <field name="model">estate.property.type</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="estate_property_type_action" model="ir.actions.act_window">
+        <field name="name">Property Types</field>
+        <field name="res_model">estate.property.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+</odoo>
