@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- New template for the approval decision page with both buttons -->
+    <template id="approval_decision" name="Tender Approval Decision">
+        <t t-call="website.layout">
+            <div class="container mt-5">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h3>Tender Approval Request</h3>
+                    </div>
+                    <div class="card-body">
+                        <h4><t t-esc="tender.name"/></h4>
+                        <p><strong>Reference:</strong> <t t-esc="tender.tender_reference"/></p>
+                        <p><strong>Company:</strong> <t t-esc="tender.company_name"/></p>
+                        <p><strong>Status:</strong> Waiting for your approval</p>
+                        
+                        <div class="mt-4">
+                            <p>Dear <t t-esc="approver_name"/>, please review this tender and make a decision:</p>
+                            
+                            <div class="d-flex mt-4">
+                                <a t-att-href="'/tender/process/%s/%s/approve' % (tender.id, token)" class="btn btn-success me-3">
+                                    <i class="fa fa-check me-1"></i> Approve Tender
+                                </a>
+                                <a t-att-href="'/tender/process/%s/%s/reject' % (tender.id, token)" class="btn btn-danger">
+                                    <i class="fa fa-times me-1"></i> Reject Tender
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- Template for successful approval -->
+    <template id="approval_success" name="Tender Approval Success">
+        <t t-call="website.layout">
+            <div class="container mt-5">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h3>Tender Approved Successfully</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>The tender "<t t-esc="tender.name"/>" has been successfully approved.</p>
+                        <p t-if="tender.tender_reference">Reference Number: <t t-esc="tender.tender_reference"/></p>
+                        <p>Thank you for your approval, <t t-esc="approver_name"/>.</p>
+                        <a href="/web" class="btn btn-primary">Go to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <!-- NEW template for successful rejection -->
+    <template id="rejection_success" name="Tender Rejection Success">
+        <t t-call="website.layout">
+            <div class="container mt-5">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h3>Tender Rejected</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>The tender "<t t-esc="tender.name"/>" has been rejected.</p>
+                        <p t-if="tender.tender_reference">Reference Number: <t t-esc="tender.tender_reference"/></p>
+                        <p>Thank you for your feedback, <t t-esc="approver_name"/>.</p>
+                        <a href="/web" class="btn btn-primary">Go to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="approval_already_processed" name="Tender Already Processed">
+        <t t-call="website.layout">
+            <div class="container mt-5">
+                <div class="card">
+                    <div class="card-header bg-warning text-white">
+                        <h3>Tender Already Processed</h3>
+                    </div>
+                    <div class="card-body">
+                        <p><t t-esc="message"/></p>
+                        <p>The tender "<t t-esc="tender.name"/>" is currently in <t t-esc="tender.state"/> state.</p>
+                        <a href="/web" class="btn btn-primary">Go to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+   
+    <template id="approval_unauthorized" name="Unauthorized Approval">
+        <t t-call="website.layout">
+            <div class="container mt-5">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h3>Unauthorized Access</h3>
+                    </div>
+                    <div class="card-body">
+                        <p><t t-esc="message"/></p>
+                        <p>The tender "<t t-esc="tender.name"/>" can only be approved by the designated approver.</p>
+                        <a href="/web" class="btn btn-primary">Go to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+   
+    <!-- Error template in case something goes wrong -->
+    <template id="approval_error" name="Tender Approval Error">
+        <t t-call="website.layout">
+            <div class="container mt-5">
+                <div class="card">
+                    <div class="card-header bg-danger text-white">
+                        <h3>Error During Approval</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>An error occurred while processing your approval request:</p>
+                        <p><t t-esc="error_message"/></p>
+                        <a href="/web" class="btn btn-primary">Go to Dashboard</a>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+</odoo>

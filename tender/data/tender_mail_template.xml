@@ -1,26 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- Updated Email Template for Tender Approval Request with Reject Button -->
         <record id="tender_save_notification_template" model="mail.template">
-            <field name="name">Tender Save Notification</field>
+            <field name="name">Tender: Approval Request</field>
             <field name="model_id" ref="model_tender_tender"/>
-            <field name="subject">Tender Saved: ${object.name}</field>
-            <field name="email_from">${user.email|safe}</field>
-            <field name="email_to">${object.manager_id.email|safe}</field>
+            <field name="subject">Tender Approval Request: {{ object.name }}</field>
+            <field name="email_from">{{ user.email }}</field>
+            <field name="email_to">{{ object.partner_id.email }}</field>
             <field name="body_html" type="html">
-                <div style="margin: 0px; padding: 0px;">
-                    <p style="margin: 0px; padding: 0px; font-size: 13px;">
-                        Dear ${object.manager_id.name},
-                        <br/><br/>
-                        This is to notify you that the tender "${object.name}" has been saved.
-                        <br/><br/>
-                        Best regards,<br/>
-                        ${user.signature}
-                    </p>
-                </div>
+<div style="margin: 0px; padding: 0px; font-size: 13px;">
+    <p style="margin: 0px; padding: 0px; font-size: 13px;">
+        Dear <t t-out="object.partner_id.name"/>,
+    </p>
+    <p>
+        Please approve the following tender:
+    </p>
+    <div style="margin: 16px 0px 16px 0px;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 10px; border: 1px solid #dee2e6; width: 30%;">
+                    <strong>Tender Title</strong>
+                </td>
+                <td style="padding: 10px; border: 1px solid #dee2e6;">
+                    <t t-out="object.name"/>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #dee2e6;">
+                    <strong>Reference Number</strong>
+                </td>
+                <td style="padding: 10px; border: 1px solid #dee2e6;">
+                    <t t-out="object.tender_reference"/>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #dee2e6;">
+                    <strong>Company</strong>
+                </td>
+                <td style="padding: 10px; border: 1px solid #dee2e6;">
+                    <t t-out="object.company_name"/>
+                </td>
+            </tr>
+            <tr>
+                <td style="padding: 10px; border: 1px solid #dee2e6;">
+                    <strong>Submission Date</strong>
+                </td>
+                <td style="padding: 10px; border: 1px solid #dee2e6;">
+                    <t t-out="format_date(object.date_submission)"/>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <p>
+        Please review this tender and provide your decision by clicking one of the buttons below:
+    </p>
+    <div style="margin: 16px 0px 16px 0px; text-align: center;">
+        <a t-att-href="object.get_approval_url()"
+           style="display: inline-block; padding: 10px 20px; margin: 0 10px; font-weight: bold; border-radius: 5px; text-decoration: none; color: #ffffff; background-color: #28a745;">
+            REVIEW AND DECIDE
+        </a>
+    </div>
+    <p style="margin-top: 24px; padding-top: 0px;">
+        Thank you,
+        <br/>
+        The Tender Management Team
+    </p>
+</div>
             </field>
-            <field name="lang">${object.partner_id.lang}</field>
-            <field name="auto_delete" eval="False"/>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
         </record>
     </data>
 </odoo>

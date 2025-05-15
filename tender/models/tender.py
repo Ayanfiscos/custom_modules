@@ -4,6 +4,8 @@ import logging
 from odoo.exceptions import ValidationError
 from datetime import timedelta
 import re
+import uuid
+import werkzeug.urls
 
 _logger = logging.getLogger(__name__)
 
@@ -19,7 +21,8 @@ class Tender(models.Model):
     date_submission = fields.Date(string='Date of Submission', required=True, tracking=True)
     manager_id = fields.Many2one('res.users', string="Manager", required=True, tracking=True)
     is_converted_to_contract = fields.Boolean(string="Converted to Contract", default=False, tracking=True)
-    partner_id = fields.Many2one('res.partner', string="Partner", tracking=True)
+    partner_id = fields.Many2one('res.partner', string="Approver", tracking=True, 
+                                help="Select the partner who will receive the approval email")
     tender_type = fields.Selection([
         ('open', 'Open Tender'),
         ('selective', 'Selective Tender'),
@@ -50,21 +53,66 @@ class Tender(models.Model):
     tender_outcome = fields.Selection([
         ('pending', 'Pending'),
         ('won', 'Won'),
+        ('rejected', 'Rejected'),
         ('lost', 'Lost'),
     ], string='Tender Outcome', tracking=True, default='pending', copy=False)
     
-    phone = fields.Char(string="Tender Contact's Number", tracking=True)
-    
-    @api.constrains('phone')
-    def _check_phone_number(self):
-        for record in self:
-            if record.phone:
-                # Remove spaces and special characters for comparison
-                phone_pattern = re.compile(r'^\+?[0-9]{10,15}$')
-                phone_number = re.sub(r'\s+|-|\(|\)', '', record.phone)
-                if not phone_pattern.match(phone_number):
-                    raise ValidationError(_("Invalid phone number format. Please enter a valid phone number."))
+    contact_name = fields.Char(string="Tender Contact's Name", tracking=True)
+    approval_token = fields.Char(string='Approval Token', copy=False)
 
+    def _generate_approval_token(self):
+        """Generate a random token for tender approval."""
+        return str(uuid.uuid4())
+
+    def get_approval_url(self):
+        """Get the URL for tender approval."""
+        self.ensure_one()
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        
+        # Generate a token if not already created
+        if not self.approval_token:
+            self.approval_token = self._generate_approval_token()
+        
+        return f"{base_url}/tender/approve/{self.id}/{self.approval_token}"
+
+    def action_send_email(self):
+        """Send approval email to the selected partner."""
+        self.ensure_one()
+        
+        # Check if partner is selected
+        if not self.partner_id:
+            raise UserError(_("Please select an approver for this tender."))
+        
+        # Check if partner has an email
+        if not self.partner_id.email:
+            raise UserError(_("The selected approver doesn't have an email address. Please update the partner's email or select another approver."))
+        
+        # Generate approval token if not already created
+        if not self.approval_token:
+            self.approval_token = self._generate_approval_token()
+        
+        # Change state to 'to_approve'
+        if self.state == 'draft':
+            self.state = 'to_approve'
+        
+        # Send email using template
+        template = self.env.ref('tender.tender_save_notification_template')
+        if template:
+            template.send_mail(self.id, force_send=True)
+            self.message_post(body=_("Approval request email sent to %s") % self.partner_id.name)
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'display_notification',
+                'params': {
+                    'title': _('Email Sent'),
+                    'message': _('Approval request has been sent to %s') % self.partner_id.name,
+                    'sticky': False,
+                    'type': 'success',
+                }
+            }
+        else:
+            raise UserError(_("Email template not found. Please contact your administrator."))
+        
     def action_save_record(self):
         """ Save the tender record """
         self.ensure_one()
@@ -79,43 +127,7 @@ class Tender(models.Model):
                 'type': 'success',
             }
         }
-
-    def action_send_email(self):
-        """ Send the email and move to 'To Approve' stage """
-        try:
-            template = self.env.ref('tender.tender_save_notification_template')
-            _logger.info(f"Manager ID: {self.manager_id}, Email: {self.manager_id.email if self.manager_id else 'None'}")
-            if not self.manager_id or not self.manager_id.email:
-                fallback_email = self.env.user.email
-                if not fallback_email:
-                    raise UserError(_("No manager email or fallback user email configured. Please set a manager or user email."))
-                _logger.warning(f"Using fallback email {fallback_email} for Tender {self.name}.")
-            template.send_mail(self.id, force_send=True)
-            self.write({'state': 'to_approve'})
-            _logger.info(f"Email sent for Tender {self.name} to {self.manager_id.email or fallback_email}.")
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Success'),
-                    'message': _('Email sent successfully. Tender moved to "To Approve" stage.'),
-                    'sticky': False,
-                    'type': 'success',
-                }
-            }
-        except Exception as e:
-            _logger.error(f"Failed to send email for Tender {self.name}: {e}")
-            return {
-                'type': 'ir.actions.client',
-                'tag': 'display_notification',
-                'params': {
-                    'title': _('Error'),
-                    'message': str(e),
-                    'sticky': True,
-                    'type': 'danger',
-                }
-            }
-
+        
     def action_approve(self):
         for record in self:
             if record.state != 'to_approve':
@@ -127,6 +139,7 @@ class Tender(models.Model):
             if record.state != 'to_approve':
                 raise UserError("Tender must be in 'To Approve' state to be rejected.")
             record.state = 'rejected'
+            record.tender_outcome = 'rejected'
 
     def action_submit_to_client(self):
         for record in self:
