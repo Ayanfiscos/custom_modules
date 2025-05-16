@@ -16,6 +16,8 @@ class SelectManagerWizard(models.TransientModel):
             raise UserError(_('The selected manager does not have an email address.'))
         if not tender.approval_token:
             tender.approval_token = tender._generate_approval_token()
+        # Set the selected manager on the tender
+        tender.manager_id = self.manager_id
         if tender.state == 'draft':
             tender.state = 'to_approve'
         template = self.env.ref('tender.tender_save_notification_template')

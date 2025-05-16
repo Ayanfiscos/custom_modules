@@ -22,6 +22,7 @@ class Tender(models.Model):
     is_converted_to_contract = fields.Boolean(string="Converted to Contract", default=False, tracking=True)
     partner_id = fields.Many2one('res.partner', string="Approver", tracking=True, 
                                 help="Select the partner who will receive the approval email")
+    manager_id = fields.Many2one('res.users', string='Manager', tracking=True, help='The manager responsible for approving this tender.')
     tender_type = fields.Selection([
         ('open', 'Open Tender'),
         ('selective', 'Selective Tender'),

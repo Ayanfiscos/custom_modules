@@ -36,8 +36,8 @@ class TenderController(http.Controller):
         if request.env.user._is_public():
             try:
                 # Get the approver information
-                approver_name = tender.partner_id.name if tender.partner_id else "Approver"
-                approver_email = tender.partner_id.email if tender.partner_id else "Unknown"
+                approver_name = tender.manager_id.name if tender.manager_id else "Approver"
+                approver_email = tender.manager_id.email if tender.manager_id else "Unknown"
                 
                 # Show the approval/rejection page with buttons
                 return request.render('tender.approval_decision', {
@@ -57,7 +57,7 @@ class TenderController(http.Controller):
         else:
             # Logged in user - verify if the current user's email matches the approver's email
             user_email = request.env.user.email
-            approver_email = tender.partner_id.email if tender.partner_id else False
+            approver_email = tender.manager_id.email if tender.manager_id else False
             
             if user_email and approver_email and user_email.lower() == approver_email.lower():
                 # Show the approval/rejection page with buttons
@@ -69,7 +69,7 @@ class TenderController(http.Controller):
             else:
                 return request.render('tender.approval_unauthorized', {
                     'tender': tender,
-                    'message': f"You are not authorized to approve this tender. Only the designated approver ({tender.partner_id.name}) can approve this tender."
+                    'message': f"You are not authorized to approve this tender. Only the designated approver ({tender.manager_id.name}) can approve this tender."
                 })
     
     @http.route(['/tender/process/<int:tender_id>/<string:token>/<string:action>'], type='http', auth="public", website=True)
@@ -100,8 +100,8 @@ class TenderController(http.Controller):
         
         # Get approver info
         if request.env.user._is_public():
-            approver_name = tender.partner_id.name if tender.partner_id else "Approver"
-            approver_email = tender.partner_id.email if tender.partner_id else "Unknown"
+            approver_name = tender.manager_id.name if tender.manager_id else "Approver"
+            approver_email = tender.manager_id.email if tender.manager_id else "Unknown"
         else:
             approver_name = request.env.user.name
             approver_email = request.env.user.email
