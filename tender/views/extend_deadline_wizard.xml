@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_extend_deadline_wizard_form" model="ir.ui.view">
+        <field name="name">extend.deadline.wizard.form</field>
+        <field name="model">tender.extend_deadline.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Extend Submission Deadline">
+                <group>
+                    <field name="new_date_submission"/>
+                    <field name="reason"/>
+                </group>
+                <footer>
+                    <button name="action_extend_deadline" type="object" string="Extend Deadline" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_extend_deadline_wizard" model="ir.actions.act_window">
+        <field name="name">Extend Submission Deadline</field>
+        <field name="res_model">tender.extend_deadline.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="view_id" ref="view_extend_deadline_wizard_form"/>
+    </record>
+</odoo>

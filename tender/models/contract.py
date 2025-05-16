@@ -22,3 +22,4 @@ class Contract(models.Model):
         ('executed', 'Executed'),
         ('closed', 'Closed'),
     ], string='Status', default='draft', tracking=True)
+    company_id = fields.Many2one('res.company', string='Company', tracking=True, default=lambda self: self.env.company)

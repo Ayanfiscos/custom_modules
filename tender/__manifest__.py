@@ -13,9 +13,15 @@
         'views/contract_views.xml',
         'views/tender_views.xml',
         'views/templates.xml',
-        'views/tender_menus.xml',
+        'reports/report_tender_document.xml',
+        'data/email_templates.xml',
         'data/tender_mail_template.xml',
+        'data/report_action.xml',             # Only needed if extra report actions are defined here
+        'views/tender_menus.xml',
+        'views/extend_deadline_wizard.xml',
+        'views/select_manager_wizard.xml',
     ],
+
     'installable': True,
     'application': True,
 }

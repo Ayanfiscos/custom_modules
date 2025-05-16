@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="tender_email_template" model="mail.template">
+        <field name="name">Tender PDF Email</field>
+        <field name="model_id" ref="model_tender_tender"/>
+        <field name="subject">Tender Document: {{ object.name }}</field>
+        <field name="email_from">{{ user.email }}</field>
+        <field name="email_to">{{ object.partner_id.email }}</field>
+        <field name="body_html" type="html">
+            <div style="margin: 0px; padding: 0px; font-size: 13px;">
+                <p style="margin: 0px; padding: 0px; font-size: 13px;">
+                    Hello <t t-out="object.partner_id.name"/>,
+                </p>
+                <p>
+                    Please find the attached Tender Document for <strong><t t-out="object.name"/></strong>.
+                </p>
+                <p style="margin-top: 24px; padding-top: 0px;">
+                    regards,
+                    <br/>
+                    <t t-out="user.name"/>
+                </p>
+            </div>
+        </field>
+        <field name="lang">{{ object.partner_id.lang }}</field>
+        <field name="auto_delete" eval="True"/>
+    </record>
+</odoo>

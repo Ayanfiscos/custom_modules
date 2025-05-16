@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <template id="report_tender_document">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Tender Document</h2>
+                        <p><strong>Title:</strong> <span t-field="doc.name"/></p>
+                        <p><strong>Reference:</strong> <span t-field="doc.tender_reference"/></p>
+                        <p><strong>Company:</strong> <span t-field="doc.company_name"/></p>
+                        <p><strong>Date of Receipt:</strong> <span t-field="doc.date_receipt"/></p>
+                        <p><strong>Date of Submission:</strong> <span t-field="doc.date_submission"/></p>
+                        <p><strong>Manager:</strong> <span t-field="doc.partner_id.name"/></p>
+                        <p><strong>Type:</strong> <span t-field="doc.tender_type"/></p>
+                        <p><strong>Category:</strong> <span t-field="doc.tender_category"/></p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
