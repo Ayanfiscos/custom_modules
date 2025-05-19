@@ -65,7 +65,7 @@
                     <field name="date_receipt" />
                     <field name="date_submission" />
                     <field name="tender_type" />
-                    <!-- <field name="state" /> -->
+                    <field name="state" />
                     <field name="tender_outcome" widget="badge" 
                         decoration-warning="tender_outcome == 'pending'"
                         decoration-success="tender_outcome == 'won'"
