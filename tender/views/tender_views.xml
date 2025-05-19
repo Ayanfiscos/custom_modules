@@ -41,7 +41,7 @@
                             <field name="tender_category" widget="selection" />
                             <!-- <field name="partner_id" /> -->
                             <!-- <field name="manager_id" /> -->
-                            <field name="state" readonly="0" />
+                            <!-- <field name="state" readonly="0" /> -->
                             <field name="contact_name" />
                             <field name="tender_outcome" readonly="1" />
                         </group>
