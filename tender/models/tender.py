@@ -180,6 +180,10 @@ class Tender(models.Model):
                 raise UserError("Tender must be in 'To Approve' state to be approved.")
             record.state = 'approved'
 
+    def action_reset(self):
+        for record in self:
+            record.state = 'draft'
+            
     def action_reject(self):
         for record in self:
             if record.state != 'to_approve':

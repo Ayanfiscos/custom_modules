@@ -13,8 +13,9 @@
                             <button name="action_open_select_manager_wizard" type="object" string="Send for Approval" class="btn-primary" invisible="state != 'draft'"/>
                             <!-- <button name="action_approve" type="object" string="Approve" 
                                     invisible="state != 'to_approve'" class="btn-success" /> -->
-                            <!-- <button name="action_reject" type="object" string="Reject" 
-                                    invisible="state != 'to_approve'" class="btn-primary" /> -->
+                            <button name="action_reset" type="object" string="Reset Tender"
+                                    invisible="state not in ['approved', 'rejected', 'pending_information', 'inspection', 'submitted']"
+                                    class="btn-primary"/>
                             <button name="action_submit_to_client" type="object" string="Submit to Client" 
                                     invisible="state != 'approved'" class="btn-success"/>
                             <button name="action_request_inspection" type="object" string="Request Inspection" 
