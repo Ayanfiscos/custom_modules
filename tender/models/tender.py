@@ -57,7 +57,7 @@ class Tender(models.Model):
         ('lost', 'Lost'),
     ], string='Tender Outcome', tracking=True, default='pending', copy=False)
     
-    contact_name = fields.Char(string="Tender Contact's Name", tracking=True)
+    contact_name = fields.Char(string="Tender Contact's Name", tracking=True, required=True)
     approval_token = fields.Char(string='Approval Token', copy=False)
 
     _sql_constraints = [
