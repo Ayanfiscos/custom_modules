@@ -15,30 +15,33 @@ class Tender(models.Model):
     _inherit = ['mail.thread', 'mail.activity.mixin']
 
     name = fields.Char(string='Tender Title', required=True, tracking=True)
+    tender_number = fields.Char(string='Reference', required=True, copy=False, readonly=True, index=True, default=lambda self: self._get_default_reference(),)
     tender_reference = fields.Char(string='Tender Reference Number', required=True, tracking=True)
     company_name = fields.Char(string='Company Name', required=True, tracking=True)
     date_receipt = fields.Date(string='Date of Receipt', required=True, tracking=True)
     date_submission = fields.Date(string='Date of Submission', required=True, tracking=True)
     is_converted_to_contract = fields.Boolean(string="Converted to Contract", default=False, tracking=True)
+    additional_note = fields.Text(string='Additional Note', tracking=True)
     partner_id = fields.Many2one('res.partner', string="Approver", tracking=True, 
                                 help="Select the partner who will receive the approval email")
-    manager_id = fields.Many2one('res.users', string='Manager', tracking=True, help='The manager responsible for approving this tender.')
+    manager_id = fields.Many2one('res.groups', string='Manager', tracking=True, help='The manager responsible for approving this tender.')
+    contract_id = fields.Many2one('tender.contract', string='Contract', tracking=True)
     tender_type = fields.Selection([
-        ('open', 'Open Tender'),
-        ('selective', 'Selective Tender'),
-        ('negotiated', 'Negotiated Tender'),
-        ('limited', 'Limited Tender'),
-        ('request_for_proposal', 'Request for Proposal (RFP)'),
-        ('request_for_quotation', 'Request for Quotation (RFQ)'),
-        ('other', 'Other')
+        ('single tender', 'Single Tender'),
+        ('double tender', 'Double Tender'),
     ], string='Type of Tender', required=True, tracking=True)
-    tender_category = fields.Selection([
-        ('goods', 'Goods'),
-        ('services', 'Services'),
-        ('works', 'Works'),
-        ('consultancy', 'Consultancy'),
-        ('other', 'Other')
-    ], string='Category of Tender', required=True, tracking=True)
+    # tender_category = fields.Selection([
+    #     ('goods', 'Goods'),
+    #     ('services', 'Services'),
+    #     ('works', 'Works'),
+    #     ('consultancy', 'Consultancy'),
+    #     ('other', 'Other')
+    # ], string='Category of Tender', required=True, tracking=True)
+    status= fields.Selection([
+        ('Awarded', 'Awarded'),
+        ('Not Awarded', 'Not Awarded'),
+        ('Pending', 'Pending'),
+    ], string='Status', default='Pending', tracking=True)
     state = fields.Selection([
         ('draft', 'Draft'),
         ('to_approve', 'To Approve'),
@@ -49,7 +52,7 @@ class Tender(models.Model):
         ('pending_information', 'Pending Information'),
         ('won', 'won'),
         ('lost', 'lost'),
-    ], string='Status', default='draft', tracking=True, copy=False)
+    ], string='State', default='draft', tracking=True, copy=False)
     tender_outcome = fields.Selection([
         ('pending', 'Pending'),
         ('won', 'Won'),
@@ -59,6 +62,17 @@ class Tender(models.Model):
     
     contact_name = fields.Char(string="Tender Contact's Name", tracking=True, required=True)
     approval_token = fields.Char(string='Approval Token', copy=False)
+    evaluation_contract_status = fields.Selection([
+        ('evaluation', 'Evaluation'),
+        ('contract_awarded', 'Awarded'),
+    ], string='Evaluation / Contract Award', default='evaluation', tracking=True)
+    additional_note = fields.Text(string='Additional Note')
+
+    request_inspection = fields.Boolean(
+        string="Request Inspection",
+        default=False,
+        tracking=True,
+    )
 
     _sql_constraints = [
         ('tender_reference_unique', 'unique(tender_reference)', 'The Tender Reference Number must be unique!'),
@@ -83,11 +97,9 @@ class Tender(models.Model):
     
     def action_submit_to_client(self):
         self.ensure_one()
-
         if self.state != 'approved':
             raise UserError("Tender must be in 'Approved' state to be submitted to client.")
         self.state = 'submitted'
-        
         # Generate the PDF report
         import base64
         pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf('tender.action_report_tender', [self.id])
@@ -99,7 +111,6 @@ class Tender(models.Model):
             'res_id': self.id,
         }
         attachment = self.env['ir.attachment'].create(attachment_vals)
-        
         template = self.env.ref('tender.tender_email_template')
         compose_form = self.env.ref('mail.email_compose_message_wizard_form', False)
         ctx = {
@@ -125,13 +136,18 @@ class Tender(models.Model):
         """Send approval email to the selected partner."""
         self.ensure_one()
         
-        # Check if partner is selected
-        if not self.partner_id:
-            raise UserError(_("Please select an approver for this tender."))
+        group = self.env.ref('sales_team.group_sale_manager')
+        users = group.users
+        emails = [user.email for user in users if user.email]
+        if not emails:
+            raise UserError(_("No email address found for the selected approver. Please update the approver's email address."))
+        # # Check if partner is selected
+        # if not self.manager_id:
+        #     raise UserError(_("Please select an approver for this tender."))
         
-        # Check if partner has an email
-        if not self.partner_id.email:
-            raise UserError(_("The selected approver doesn't have an email address. Please update the partner's email or select another approver."))
+        # # Check if partner has an email
+        # if not self.manager_id.email:
+        #     raise UserError(_("The selected approver doesn't have an email address. Please update the partner's email or select another approver."))
         
         # Generate approval token if not already created
         if not self.approval_token:
@@ -144,7 +160,8 @@ class Tender(models.Model):
         # Send email using template
         template = self.env.ref('tender.tender_save_notification_template')
         if template:
-            template.send_mail(self.id, force_send=True)
+            for email in emails:
+                template.sudo().send_mail(self.id, email_values={'email_to': email}, force_send=True)
             self.message_post(body=_("Approval request email sent to %s") % self.partner_id.name)
             return {
                 'type': 'ir.actions.client',
@@ -175,24 +192,31 @@ class Tender(models.Model):
         }
         
     def action_approve(self):
-        for record in self:
-            if record.state != 'to_approve':
-                raise UserError("Tender must be in 'To Approve' state to be approved.")
-            record.state = 'approved'
+        self.ensure_one()
+        if not self.env.user.has_group('sales_team.group_sale_manager'):
+            raise UserError(_("Only Sales / Administrator group members can approve this tender."))
+        if self.state != 'to_approve':
+            raise UserError(_("tender is not in a state that can be approved."))
+        self.state = 'approved'
+        self.message_post(body=_("Tender has been approved by %s") % self.env.user.name)
+        
+    def action_reject(self):
+        self.ensure_one()
+        if not self.env.user.has_group('sales_team.group_sale_manager'):
+            raise UserError(_("Only Sales / Administrator group members can reject this tender."))
+        if self.state != 'to_approve':
+            raise UserError(_("tender is not in a state that can be rejected."))
+        self.state = 'rejected'
+        self.message_post(body=_("Tender has been rejected by %s") % self.env.user.name)
+        self.tender_outcome = 'rejected'
 
     def action_reset(self):
         for record in self:
             record.state = 'draft'
-            
-    def action_reject(self):
-        for record in self:
-            if record.state != 'to_approve':
-                raise UserError("Tender must be in 'To Approve' state to be rejected.")
-            record.state = 'rejected'
-            record.tender_outcome = 'rejected'
 
     def action_request_inspection(self):
         for record in self:
+            record.request_inspection = True
             if record.state != 'submitted':
                 raise UserError("Tender must be in 'Submitted' state to request inspection.")
             record.state = 'inspection'
@@ -209,6 +233,7 @@ class Tender(models.Model):
                 raise UserError("You can only mark as won after client feedback.")
             record.state = 'won'
             record.tender_outcome = 'won'
+            record.status = 'Awarded'
 
             # Automatically create a contract when the tender is marked as won
             start_date = fields.Date.today()
@@ -234,6 +259,7 @@ class Tender(models.Model):
         for record in self:
             record.state = 'lost'
             record.tender_outcome = 'lost'
+            record.status = 'Not Awarded'
 
     def action_cancel(self):
         for record in self:
@@ -253,24 +279,81 @@ class Tender(models.Model):
             })
             record.is_converted_to_contract = True
 
-    def action_open_extend_deadline_wizard(self):
-        self.ensure_one()
-        return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'tender.extend_deadline.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_new_date_submission': self.date_submission,
-            },
-        }
 
-    def action_open_select_manager_wizard(self):
-        self.ensure_one()
+    user_has_group = fields.Boolean(
+        compute="_compute_user_has_group", 
+        string="User Has Group", 
+        store=False
+    )
+
+    def _compute_user_has_group(self):
+        for rec in self:
+            rec.user_has_group = self.env.user.has_group('sales_team.group_sale_manager')
+
+    @api.model
+    def _get_default_reference(self):
+        return self.env['ir.sequence'].next_by_code('tender.tender') or 'New'
+    # def create(self, vals):
+    #     if vals.get('tender_number', 'New') or vals['tender_number'] == 'New':
+    #         vals['tender_number'] = self.env['ir.sequence'].next_by_code('tender.tender') or 'New'
+    #     return super(Tender, self).create(vals)
+
+    @api.onchange('request_inspection')
+    def _onchange_request_inspection(self):
+        for rec in self:
+            if rec.state == 'submitted' and rec.request_inspection:
+                rec.state = 'inspection'
+                # rec.request_inspection = False  # Do NOT reset the toggle
+
+    def action_awaiting_result(self):
+        if self.state not in ['submitted', 'inspection']:
+            raise UserError("Tender must be in 'Submitted to Client or Inspection' state to await result.")
+        if self.state == 'inspection':
+            self.state = 'pending_information'
+        elif self.request_inspection:
+            self.state = 'inspection'
+        else:
+            self.state = 'pending_information'
+
+    # @api.model
+    # def create(self, vals):
+    #     tender = super(Tender, self).create(vals)
+    #     if tender.state == 'won':
+    #         tender._populate_other_info_and_contract()
+    #     return tender
+
+    # def write(self, vals):
+    #     res = super(Tender, self).write(vals)
+    #     if 'state' in vals and vals['state'] == 'won':
+    #         self._populate_other_info_and_contract()
+    #     return res
+
+    # def _populate_other_info_and_contract(self):
+    #     for record in self:
+    #         # Populate Other Information
+    #         record.other_info_ids.create({
+    #             'tender_id': record.id,
+    #             'additional_note': f"Auto-generated for {record.name}",
+    #             'contact_name': record.contact_name,
+    #         })
+
+            # Populate Contract Lines
+            # record.contract_line_ids.create({
+            #     'tender_id': record.id,
+            #     'name': f"Contract for {record.name}",
+            #     'tender_type': record.tender_type,
+            #     'state': 'won',
+            #     'date_receipt': record.date_receipt,
+            #     'date_submission': record.date_submission,
+            #     'company_name': record.company_name,
+            # })
+    def action_view_tenders(self):
+        # Return action to open related receipts
         return {
             'type': 'ir.actions.act_window',
-            'res_model': 'tender.select_manager.wizard',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'active_id': self.id},
+            'name': 'Tenders',
+            'res_model': 'tender.tender',
+            'view_mode': 'tree,form',
+            'domain': [('tender_id', '=', self.id)],
+            'target': 'current',
         }

@@ -13,7 +13,6 @@
                         <p><strong>Date of Submission:</strong> <span t-field="doc.date_submission"/></p>
                         <p><strong>Manager:</strong> <span t-field="doc.partner_id.name"/></p>
                         <p><strong>Type:</strong> <span t-field="doc.tender_type"/></p>
-                        <p><strong>Category:</strong> <span t-field="doc.tender_category"/></p>
                     </div>
                 </t>
             </t>

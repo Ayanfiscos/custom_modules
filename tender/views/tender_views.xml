@@ -5,46 +5,75 @@
             <field name="name">tender.form</field>
             <field name="model">tender.tender</field>
             <field name="arch" type="xml">
-                <form string="Tender">
+            <form string="Tender">
+                <field name="user_has_group" invisible="1"/>
+                <header>
+                    <button name="action_view_tenders"
+                            type="object"
+                            class="oe_stat_button"
+                            icon="fa-truck">
+                            <field name="name" widget="statinfo"/>
+                    </button>
+                        <button name="action_save_record" type="object" string="Save"
+                                invisible="state != 'draft'" class="btn-primary"/>
+                        <button name="action_send_email" type="object" string="Send for Approval" class="btn-primary" invisible="state != 'draft'"/>
+                        <button name="action_approve" type="object" string="Approve" 
+                                invisible="state != 'to_approve' or not user_has_group" class="btn-success" />
+                        <button name="action_reject" type="object" string="Reject" 
+                                invisible="state != 'to_approve' or not user_has_group" class="btn-success" />
+                        <button name="action_reset" type="object" string="Reset Tender"
+                                invisible="state not in ['approved', 'rejected', 'pending_information', 'inspection', 'submitted']"
+                                class="btn-primary"/>
+                        <button name="action_submit_to_client" type="object" string="Submit to Client" 
+                                invisible="state != 'approved'" class="btn-success"/>
+                        <button name="action_awaiting_result" type="object" string="Awaiting Result" 
+                                invisible="state not in ['submitted', 'inspection']" class="btn-success" />
+                        <button name="action_mark_won" type="object" string="Mark as Won" 
+                                invisible="state not in ('pending_information')" class="btn-success" />
+                        <button name="action_mark_lost" type="object" string="Mark as Lost"
+                                invisible="state not in ( 'pending_information')" class="btn-secondary" />
+                        <div invisible="state != 'submitted'" style="display: flex; align-items: center; gap: 4px; min-width: 260px;">
+                            <span style="color:#666; font-size:14px; white-space:nowrap;">Request for Inspection?</span>
+                            <field name="request_inspection" widget="checkbox" string=""/>
+                        </div>
+                        <field name="state" widget="statusbar" 
+                            statusbar_visible="to_approve,approved,rejected,submitted,inspection,pending_information,won,lost"/>
+                    </header>
                     <sheet>
-                        <header>
-                            <button name="action_save_record" type="object" string="Save"
-                                    invisible="state != 'draft'" class="btn-primary"/>
-                            <button name="action_open_select_manager_wizard" type="object" string="Send for Approval" class="btn-primary" invisible="state != 'draft'"/>
-                            <!-- <button name="action_approve" type="object" string="Approve" 
-                                    invisible="state != 'to_approve'" class="btn-success" /> -->
-                            <button name="action_reset" type="object" string="Reset Tender"
-                                    invisible="state not in ['approved', 'rejected', 'pending_information', 'inspection', 'submitted']"
-                                    class="btn-primary"/>
-                            <button name="action_submit_to_client" type="object" string="Submit to Client" 
-                                    invisible="state != 'approved'" class="btn-success"/>
-                            <button name="action_request_inspection" type="object" string="Request Inspection" 
-                                    invisible="state != 'submitted'" class="btn-success"/>
-                            <button name="action_mark_pending_info" type="object" string="Awaiting Result" 
-                                    invisible="state not in ( 'inspection, submitted')" class="btn-success" />
-                            <button name="action_mark_won" type="object" string="Mark as Won" 
-                                    invisible="state not in ('pending_information')" class="btn-success" />
-                            <button name="action_mark_lost" type="object" string="Mark as Lost"
-                                    invisible="state not in ( 'pending_information')" class="btn-secondary" />
-                            <!-- <button name="action_open_extend_deadline_wizard" type="object" string="Extend Submission Deadline"
-                                    invisible="state not in ( 'pending_information')" class="btn-secondary"/> -->
-                            <field name="state" widget="statusbar" 
-                                statusbar_visible="to_approve,approved,rejected,submitted,inspection,pending_information,won,lost"/>
-                        </header>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="tender_number" readonly="1"/>
+                            </h1>
+                        </div>
                         <group>
-                            <field name="name" />
-                            <field name="tender_reference" />
-                            <field name="company_name" />
-                            <field name="date_receipt" />
-                            <field name="date_submission" />
-                            <field name="tender_type" widget="selection" />  
-                            <field name="tender_category" widget="selection" />
-                            <!-- <field name="partner_id" /> -->
-                            <!-- <field name="manager_id" /> -->
-                            <!-- <field name="state" readonly="0" /> -->
-                            <field name="contact_name" />
-                            <field name="tender_outcome" readonly="1" />
+                            <group>
+                                <field name="company_name" readonly="state in ('won', 'rejected')"/>
+                                <field name="name" string="Tender Title" readonly="state in ('won', 'rejected')"/>
+                                <field name="tender_type" widget="selection" readonly="state in ('won', 'rejected')"/>
+                                <field name="tender_reference" string="Reference Number" readonly="state in ('won', 'rejected')"/>
+                            </group>
+                            <group>
+                                <field name="date_receipt" string="Date Received" readonly="state in ('won', 'rejected')"/>
+                                <field name="date_submission" string="Date Submitted" readonly="state in ('won', 'rejected')"/>
+                                <field name="tender_outcome" string="Status" readonly="1"/>
+                                <field name="evaluation_contract_status" string="Evaluation / Contract Status" readonly="state in ('won', 'rejected')"/>
+                                <field name="contact_name" string="Tender's Contact Name" readonly="state in ('won', 'rejected')"/>
+                                <!-- <field name="state" /> -->
+                            </group>
                         </group>
+                        <notebook>
+                            <page string="Other Information">
+                                <group>
+                                <field name="name" string="Tender Title" readonly="state in ('won', 'rejected')"/>
+                                    <field name="additional_note" string="Additional Note"/>
+                                </group>
+                            </page>
+                            <page string="Contract">
+                                <group>
+                                    <field name="tender_outcome" string="Status" widget="selection" readonly="1"/>
+                                </group>
+                            </page>
+                        </notebook>
                     </sheet>
                     <div class="oe_chatter">
                         <field name="message_follower_ids"/>
@@ -59,13 +88,14 @@
             <field name="model">tender.tender</field>
             <field name="arch" type="xml">
                 <tree string="Tender" decoration-success="tender_outcome == 'won'" decoration-danger="tender_outcome == 'lost'">
-                    <field name="name" />
-                    <field name="tender_reference" />
+                    <field name="tender_number" string="Reference"/>
                     <field name="company_name" />
+                    <field name="name" />
+                    <field name="tender_type" />
+                    <field name="tender_reference" />
                     <field name="date_receipt" />
                     <field name="date_submission" />
-                    <field name="tender_type" />
-                    <field name="state" />
+                    <field name="status" />
                     <field name="tender_outcome" widget="badge" 
                         decoration-warning="tender_outcome == 'pending'"
                         decoration-success="tender_outcome == 'won'"

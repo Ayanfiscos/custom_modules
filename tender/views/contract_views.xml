@@ -5,18 +5,49 @@
             <field name="model">tender.contract</field>
             <field name="arch" type="xml">
                 <form string="Contract">
+                    <header>
+                        <button name="action_negotiate" type="object" string="Negotiate" class="btn-primary" invisible="state != 'draft'"/>
+                        <button name="action_finalize" type="object" string="Finalize" class="btn-success" invisible="state != 'negotiation'"/>
+                        <button name="action_execute" type="object" string="Execute" class="btn-success" invisible="state != 'final'"/>
+                        <button name="action_reset" type="object" string="Reset" class="btn-secondary" invisible="state not in ['negotiation','final']"/>
+                        <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 10px;">
+                            <button name="%(action_tender)d" type="action" string="Tenders" icon="fa-file-alt" style="background: transparent; border: none; cursor: pointer;">
+                                <i class="fa fa-file-alt" style="font-size: 24px; color: #666;"></i>
+                                <span style="display: block; font-size: 14px; color: #666;">Tenders</span>
+                            </button>
+                        </div>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,negotiation,final,executed"/>
+                    </header>
                     <sheet>
+                        <div class="oe_title">
+                            <h1><field name="name" readonly="1"/></h1>
+                        </div>
                         <group>
-                            <field name="company_name"/>
-                            <field name="name"/>
-                            <field name="tender_id"/>
-                            <field name="contract_reference"/>
-                            <field name="start_date"/>
-                            <field name="end_date"/>
-                            <field name="approved_amount"/>
-                            <field name="state"/>
+                            <group>
+                                <field name="company_name" readonly="state in ['executed']"/>
+                                <field name="contract_reference" readonly="state in ['executed']"/>
+                            </group>
+                            <group>
+                                <field name="start_date" readonly="state in ['executed']"/>
+                                <field name="duration_of_contract" readonly="1"/>
+                                <field name="end_date" readonly="state in ['executed']"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="extension_option"/>
+                                <field name="reviewed_date"/>
+                            </group>
+                            <group>
+                                <field name="comment"/>
+                            </group>
                         </group>
                     </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
                 </form>
             </field>
         </record>
@@ -25,19 +56,17 @@
             <field name="name">contract.tree</field>
             <field name="model">tender.contract</field>
             <field name="arch" type="xml">
-                <tree string="Contracts" decoration-success="tender_outcome == 'won'">
+                <tree string="Contracts" decoration-info="state == 'draft'" decoration-primary="state == 'negotiation'" decoration-warning="state == 'final'" decoration-success="state == 'executed'" decoration-danger="state == 'closed'">
                     <field name="company_name"/>
                     <field name="name"/>
-                    <field name="tender_id"/>
                     <field name="contract_reference"/>
                     <field name="start_date"/>
+                    <field name="duration_of_contract"/>
                     <field name="end_date"/>
-                    <field name="approved_amount"/>
+                    <field name="extension_option"/>
+                    <field name="reviewed_date"/>
+                    <field name="comment"/>
                     <field name="state"/>
-                    <field name="tender_outcome" widget="badge" 
-                        decoration-warning="tender_outcome == 'pending'"
-                        decoration-success="tender_outcome == 'won'"
-                        decoration-danger="tender_outcome == 'lost'"/>
                 </tree>
             </field>
         </record>
