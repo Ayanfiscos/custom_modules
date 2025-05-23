@@ -102,7 +102,8 @@ class Tender(models.Model):
         self.state = 'submitted'
         # Generate the PDF report
         import base64
-        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf('tender.action_report_tender', [self.id])
+        pdf_content, _ = self.env.ref('tender.action_report_tender')._render_qweb_pdf(self.id)
+        # pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf('tender.action_report_tender', [self.id])
         attachment_vals = {
             'name': f"Tender - {self.name}.pdf",
             'type': 'binary',
@@ -120,7 +121,7 @@ class Tender(models.Model):
             'default_template_id': template.id if template else False,
             'default_composition_mode': 'comment',
             'mark_tender_as_sent': True,
-            'default_attachment_ids': [(6, 0, [attachment.id])],  # Ensure PDF is attached
+            # 'default_attachment_ids': [(6, 0, [attachment.id])],  # Ensure PDF is attached
         }
         return {
             'type': 'ir.actions.act_window',
