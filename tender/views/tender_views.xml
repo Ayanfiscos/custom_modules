@@ -1,37 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+
+        <!-- Tender Form View -->
         <record id="view_tender_form" model="ir.ui.view">
             <field name="name">tender.form</field>
             <field name="model">tender.tender</field>
             <field name="arch" type="xml">
-            <form string="Tender">
-                <field name="user_has_group" invisible="1"/>
-                <header>
-                    <button name="action_view_tenders"
-                            type="object"
-                            class="oe_stat_button"
-                            icon="fa-truck">
-                            <field name="name" widget="statinfo"/>
-                    </button>
-                        <button name="action_save_record" type="object" string="Save"
+                <form string="Tender">
+                    <field name="user_has_group" invisible="1"/>
+                    <header>
+                       <button name="action_save_record" type="object" string="Save"
                                 invisible="state != 'draft'" class="btn-primary"/>
                         <button name="action_send_email" type="object" string="Send for Approval" class="btn-primary" invisible="state != 'draft'"/>
                         <button name="action_approve" type="object" string="Approve" 
-                                invisible="state != 'to_approve' or not user_has_group" class="btn-success" />
+                                invisible="state != 'to_approve' or not user_has_group" class="btn-success"/>
                         <button name="action_reject" type="object" string="Reject" 
-                                invisible="state != 'to_approve' or not user_has_group" class="btn-success" />
+                                invisible="state != 'to_approve' or not user_has_group" class="btn-success"/>
                         <button name="action_reset" type="object" string="Reset Tender"
                                 invisible="state not in ['approved', 'rejected', 'pending_information', 'inspection', 'submitted']"
                                 class="btn-primary"/>
                         <button name="action_submit_to_client" type="object" string="Submit to Client" 
                                 invisible="state != 'approved'" class="btn-success"/>
                         <button name="action_awaiting_result" type="object" string="Awaiting Result" 
-                                invisible="state not in ['submitted', 'inspection']" class="btn-success" />
+                                invisible="state not in ['submitted', 'inspection']" class="btn-success"/>
                         <button name="action_mark_won" type="object" string="Mark as Won" 
-                                invisible="state not in ('pending_information')" class="btn-success" />
+                                invisible="state not in ('pending_information')" class="btn-success"/>
                         <button name="action_mark_lost" type="object" string="Mark as Lost"
-                                invisible="state not in ( 'pending_information')" class="btn-secondary" />
+                                invisible="state not in ('pending_information')" class="btn-secondary"/>
                         <div invisible="state != 'submitted'" style="display: flex; align-items: center; gap: 4px; min-width: 260px;">
                             <span style="color:#666; font-size:14px; white-space:nowrap;">Request for Inspection?</span>
                             <field name="request_inspection" widget="checkbox" string=""/>
@@ -58,14 +54,13 @@
                                 <field name="tender_outcome" string="Status" readonly="1"/>
                                 <field name="evaluation_contract_status" string="Evaluation / Contract Status" readonly="state in ('won', 'rejected')"/>
                                 <field name="contact_name" string="Tender's Contact Name" readonly="state in ('won', 'rejected')"/>
-                                <!-- <field name="state" /> -->
                             </group>
                         </group>
                         <notebook>
                             <page string="Other Information">
                                 <group>
-                                <field name="name" string="Tender Title" readonly="state in ('won', 'rejected')"/>
                                     <field name="additional_note" string="Additional Note"/>
+                                    <field name="contract_id"/>
                                 </group>
                             </page>
                             <page string="Contract">
@@ -75,6 +70,9 @@
                             </page>
                         </notebook>
                     </sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_open_related_contract" string="Go to Contract" type="object" class="btn-primary" icon="fa-external-link"/>
+                    </div>
                     <div class="oe_chatter">
                         <field name="message_follower_ids"/>
                         <field name="activity_ids"/>
@@ -83,32 +81,31 @@
                 </form>
             </field>
         </record>
+
+        <!-- Tender Tree View -->
         <record id="view_tender_tree" model="ir.ui.view">
             <field name="name">tender.tree</field>
             <field name="model">tender.tender</field>
             <field name="arch" type="xml">
                 <tree string="Tender" decoration-success="tender_outcome == 'won'" decoration-danger="tender_outcome == 'lost'">
                     <field name="tender_number" string="Reference"/>
-                    <field name="company_name" />
-                    <field name="name" />
-                    <field name="tender_type" />
-                    <field name="tender_reference" />
-                    <field name="date_receipt" />
-                    <field name="date_submission" />
-                    <field name="status" />
+                    <field name="company_name"/>
+                    <field name="name"/>
+                    <field name="tender_type"/>
+                    <field name="tender_reference"/>
+                    <field name="date_receipt"/>
+                    <field name="date_submission"/>
+                    <field name="status"/>
                     <field name="tender_outcome" widget="badge" 
                         decoration-warning="tender_outcome == 'pending'"
                         decoration-success="tender_outcome == 'won'"
                         decoration-danger="tender_outcome == 'lost'"/>
-                    <field name="contact_name" />
+                    <field name="contact_name"/>
                 </tree>
             </field>
-            <!-- <div class="oe_chatter">
-                <field name="message_follower_ids"/>
-                <field name="activity_ids"/>
-                <field name="message_ids" widget="mail_thread"/>
-            </div> -->
         </record>
+
+        <!-- Action for Tender -->
         <record id="action_tender" model="ir.actions.act_window">
             <field name="name">Tender</field>
             <field name="res_model">tender.tender</field>

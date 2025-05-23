@@ -1,4 +1,5 @@
 from odoo import models, fields, api
+from odoo.exceptions import UserError
 
 class Contract(models.Model):
     _name = "tender.contract"
@@ -47,6 +48,19 @@ class Contract(models.Model):
             if rec.state == 'draft':
                 rec.state = 'negotiation'
 
+    def action_open_tender(self):
+        if not self.tender_id:
+            raise UserError("There is no Tender for this Contract.")
+        # Return the action to open the existing tender
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Open Tender',
+            'res_model': 'tender.tender',
+            'view_mode': 'form',
+            'res_id': self.tender_id.id,  # Open the specific tender (use .id)
+            'target': 'current',
+        }
+    
     def action_finalize(self):
         for rec in self:
             if rec.state == 'negotiation':

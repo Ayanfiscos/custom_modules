@@ -94,16 +94,15 @@ class Tender(models.Model):
         
         return f"{base_url}/tender/approve/{self.id}/{self.approval_token}"
     
-    
     def action_submit_to_client(self):
         self.ensure_one()
+
         if self.state != 'approved':
             raise UserError("Tender must be in 'Approved' state to be submitted to client.")
-        self.state = 'submitted'
+        
         # Generate the PDF report
         import base64
-        pdf_content, _ = self.env.ref('tender.action_report_tender')._render_qweb_pdf(self.id)
-        # pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf('tender.action_report_tender', [self.id])
+        pdf_content, _ = self.env['ir.actions.report']._render_qweb_pdf('tender.action_report_tender', [self.id])
         attachment_vals = {
             'name': f"Tender - {self.name}.pdf",
             'type': 'binary',
@@ -112,6 +111,7 @@ class Tender(models.Model):
             'res_id': self.id,
         }
         attachment = self.env['ir.attachment'].create(attachment_vals)
+        
         template = self.env.ref('tender.tender_email_template')
         compose_form = self.env.ref('mail.email_compose_message_wizard_form', False)
         ctx = {
@@ -136,7 +136,7 @@ class Tender(models.Model):
     def action_send_email(self):
         """Send approval email to the selected partner."""
         self.ensure_one()
-        
+        # Ensure a partner is selected before sending email
         group = self.env.ref('sales_team.group_sale_manager')
         users = group.users
         emails = [user.email for user in users if user.email]
@@ -250,12 +250,29 @@ class Tender(models.Model):
                 'tender_outcome': record.tender_outcome,
                 'approved_amount': 0.0,
             })
+            _logger.info(f"Created contract {contract.id} for tender {record.id}")
+            record.contract_id = contract  # Link the contract to the tender
+            _logger.info(f"Tender {record.id} now has contract_id {record.contract_id.id}")
             record.is_converted_to_contract = True
             record.message_post(
                 body=f"Contract '{contract.name}' has been automatically created upon marking the tender as won.",
                 subtype_xmlid="mail.mt_note"
             )
 
+    def action_open_related_contract(self):
+        self.ensure_one()  # Ensure we're working with a single record
+        if not self.contract_id:
+            raise UserError("There is no contract for this tender.")
+        # Return the action to open the existing contract
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Open Contract',
+            'res_model': 'tender.contract',
+            'view_mode': 'form',
+            'res_id': self.contract_id.id,  # Open the specific contract
+            'target': 'current',
+        }
+    
     def action_mark_lost(self):
         for record in self:
             record.state = 'lost'

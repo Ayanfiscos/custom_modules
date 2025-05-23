@@ -10,12 +10,6 @@
                         <button name="action_finalize" type="object" string="Finalize" class="btn-success" invisible="state != 'negotiation'"/>
                         <button name="action_execute" type="object" string="Execute" class="btn-success" invisible="state != 'final'"/>
                         <button name="action_reset" type="object" string="Reset" class="btn-secondary" invisible="state not in ['negotiation','final']"/>
-                        <div style="display: flex; justify-content: center; gap: 20px; margin-bottom: 10px;">
-                            <button name="%(action_tender)d" type="action" string="Tenders" icon="fa-file-alt" style="background: transparent; border: none; cursor: pointer;">
-                                <i class="fa fa-file-alt" style="font-size: 24px; color: #666;"></i>
-                                <span style="display: block; font-size: 14px; color: #666;">Tenders</span>
-                            </button>
-                        </div>
                         <field name="state" widget="statusbar" statusbar_visible="draft,negotiation,final,executed"/>
                     </header>
                     <sheet>
@@ -40,9 +34,13 @@
                             </group>
                             <group>
                                 <field name="comment"/>
+                                <field name="tender_id"/>
                             </group>
                         </group>
                     </sheet>
+                    <div class="oe_button_box" name="button_box">
+                         <button name="action_open_tender" string="Go to Tender" type="object" class="btn-primary" icon="fa-external-link"/>
+                    </div>
                     <div class="oe_chatter">
                         <field name="message_follower_ids"/>
                         <field name="activity_ids"/>
